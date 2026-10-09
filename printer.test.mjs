@@ -1,7 +1,79 @@
-import {test} from 'node:test';
-import assert from 'node:assert/strict';
-import {DatabaseSync} from 'node:sqlite';
-import {createPrintQueue,labelZpl} from './printer.mjs';
-const o={id:1,number:12,day:'2026-10-09',created:'2026-10-09T18:00:00Z',name:'José ^XZ',total:350,items:[{name:'Taco asada',qty:1,unit:350,options:[{name:'Aguacate'}]}]};
-test('ZPL escapes commands and paginates all lines',()=>{const z=labelZpl(o);assert.equal((z.match(/\^XZ/g)||[]).length,1);assert.ok(z.includes('_5e_58_5a'));assert.ok(z.includes('^PW812^LL1218'));const large=labelZpl({...o,items:Array.from({length:30},()=>o.items[0])});assert.ok((large.match(/\^XA/g)||[]).length>1);assert.equal((large.match(/_54_61_63_6f_20_61_73_61_64_61/g)||[]).length,30);});
-test('durable print queue preserves errors, serializes submission and skips cancellation',async()=>{const db=new DatabaseSync(':memory:');db.exec('CREATE TABLE orders(id INTEGER PRIMARY KEY,number INTEGER,day TEXT,created TEXT,name TEXT,total INTEGER,items TEXT,cancel_reason TEXT)');db.prepare('INSERT INTO orders VALUES(?,?,?,?,?,?,?,NULL)').run(o.id,o.number,o.day,o.created,o.name,o.total,JSON.stringify(o.items));let calls=0;let fail=true;const q=createPrintQueue(db,async()=>{calls++;if(fail)throw Error('offline');return {jobId:42};});try{q.enqueue(1);await q.processNext();assert.equal(q.latest(1).status,'uncertain');await q.processNext();assert.equal(calls,1);fail=false;q.enqueue(1,true);await Promise.all([q.processNext(),q.processNext()]);assert.equal(calls,2);assert.equal(q.latest(1).status,'submitted');assert.equal(q.latest(1).windows_job,42);q.enqueue(1,true);db.exec("UPDATE print_jobs SET status='sending' WHERE status='queued'");q.close();const recovered=createPrintQueue(db);assert.equal(recovered.latest(1).status,'uncertain');recovered.close();q.enqueue(1);db.exec("UPDATE orders SET cancel_reason='cancelada'");await q.processNext();assert.equal(q.latest(1).status,'cancelled');assert.equal(calls,2);}finally{q.close();db.close();}});
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import { DatabaseSync } from "node:sqlite";
+import { createPrintQueue, labelZpl } from "./printer.mjs";
+const o = {
+  id: 1,
+  number: 12,
+  day: "2026-10-09",
+  created: "2026-10-09T18:00:00Z",
+  name: "José ^XZ",
+  total: 350,
+  items: [
+    { name: "Taco asada", qty: 1, unit: 350, options: [{ name: "Aguacate" }] },
+  ],
+};
+test("ZPL escapes commands and paginates all lines", () => {
+  const z = labelZpl(o);
+  assert.equal((z.match(/\^XZ/g) || []).length, 1);
+  assert.ok(z.includes("_5e_58_5a"));
+  assert.ok(z.includes("^PW812^LL1218"));
+  const large = labelZpl({
+    ...o,
+    items: Array.from({ length: 30 }, () => o.items[0]),
+  });
+  assert.ok((large.match(/\^XA/g) || []).length > 1);
+  assert.equal(
+    (large.match(/_54_61_63_6f_20_61_73_61_64_61/g) || []).length,
+    30,
+  );
+});
+test("durable print queue preserves errors, serializes submission and skips cancellation", async () => {
+  const db = new DatabaseSync(":memory:");
+  db.exec(
+    "CREATE TABLE orders(id INTEGER PRIMARY KEY,number INTEGER,day TEXT,created TEXT,name TEXT,total INTEGER,items TEXT,cancel_reason TEXT)",
+  );
+  db.prepare("INSERT INTO orders VALUES(?,?,?,?,?,?,?,NULL)").run(
+    o.id,
+    o.number,
+    o.day,
+    o.created,
+    o.name,
+    o.total,
+    JSON.stringify(o.items),
+  );
+  let calls = 0;
+  let fail = true;
+  const q = createPrintQueue(db, async () => {
+    calls++;
+    if (fail) throw Error("offline");
+    return { jobId: 42 };
+  });
+  try {
+    q.enqueue(1);
+    await q.processNext();
+    assert.equal(q.latest(1).status, "uncertain");
+    await q.processNext();
+    assert.equal(calls, 1);
+    fail = false;
+    q.enqueue(1, true);
+    await Promise.all([q.processNext(), q.processNext()]);
+    assert.equal(calls, 2);
+    assert.equal(q.latest(1).status, "submitted");
+    assert.equal(q.latest(1).windows_job, 42);
+    q.enqueue(1, true);
+    db.exec("UPDATE print_jobs SET status='sending' WHERE status='queued'");
+    q.close();
+    const recovered = createPrintQueue(db);
+    assert.equal(recovered.latest(1).status, "uncertain");
+    recovered.close();
+    q.enqueue(1);
+    db.exec("UPDATE orders SET cancel_reason='cancelada'");
+    await q.processNext();
+    assert.equal(q.latest(1).status, "cancelled");
+    assert.equal(calls, 2);
+  } finally {
+    q.close();
+    db.close();
+  }
+});

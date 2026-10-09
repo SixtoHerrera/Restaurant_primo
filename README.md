@@ -18,7 +18,7 @@ La base SQLite se guarda en `%LOCALAPPDATA%\TaqueriaElPrimo\primo.sqlite`, fuera
 
 No se registran pagos ni se calculan impuestos. Se muestra subtotal y Tax not included. Los reportes excluyen cancelaciones y muestran su cantidad por separado. Las órdenes canceladas no liberan su número.
 
-Impresión automática mediante Zebra USB ZDesigner ZD621-203dpi ZPL, etiquetas 4 x 6 pulgadas a 203 dpi. El servidor manda ZPL a la cola RAW de Windows. PRIMO_PRINTER permite cambiar el nombre exacto de la cola, pero este formato solo es para Zebra compatible con ZPL a 203 dpi. No usar este adaptador con Star. Las órdenes antiguas no se imprimen automáticamente. Pedidos largos usan varias etiquetas numeradas. PRIMO_PRINT_MODE=disabled desactiva el procesamiento de cola para pruebas. Administración muestra el último envío y permite reimprimir sin crear otra orden. Consultar actualiza el estado. Enviada a Windows no significa salida física: una impresora desconectada puede retener el trabajo. Revisar la cola de Windows y el papel antes de reimprimir; no hay reintentos automáticos tras errores o interrupciones ambiguas. Cancelar una orden no retira un trabajo ya enviado a Windows.
+Impresión automática mediante Zebra USB ZDesigner ZD621-203dpi ZPL, etiquetas 4 x 6 pulgadas a 203 dpi. El servidor manda ZPL a la cola RAW de Windows. PRIMO_PRINTER permite cambiar el nombre exacto de la colita, pero este formato solo es para Zebra compatible con ZPL a 203 dpi. No usar este adaptador con Star. Las órdenes antiguas no se imprimen automáticamente. Pedidos largos usan varias etiquetas numeradas. PRIMO_PRINT_MODE=disabled desactiva el procesamiento de cola para pruebas. Administración muestra el último envío y permite reimprimir sin crear otra orden. Consultar actualiza el estado. Enviada a Windows no significa salida física: una impresora desconectada puede retener el trabajo. Revisar la cola de Windows y el papel antes de reimprimir; no hay reintentos automáticos tras errores o interrupciones ambiguas. Cancelar una orden no retira un trabajo ya enviado a Windows.
 
 ## Respaldos
 
@@ -35,8 +35,9 @@ Las pruebas usan una carpeta temporal, independiente de los datos reales.
 Probar la tablet y red física, validar físicamente la impresión automática de cocina, configurar inicio automático de Windows y respaldo, confirmar zona horaria del restaurante. Esta versión es para validar el flujo, no está lista para operar cocina sin esos pasos. La pantalla final se limpia a los 25 segundos; la limpieza por abandono del carrito todavía no está implementada.
 
 ## Activar una actualización
+
 Detener el servidor anterior con Ctrl+C y volver a ejecutar node server.mjs. Recargar los navegadores. La cola persistente se crea automáticamente al arrancar sin borrar órdenes.
 
 ## Etiqueta de prueba USB
-Ejecutar node print-test.mjs imprime una etiqueta de ejemplo sin guardar una orden. Requiere la Zebra instalada y conectada. Las pruebas de npm test nunca usan la impresora real.
 
+Ejecutar node print-test.mjs imprime una etiqueta de ejemplo sin guardar una orden. Requiere la Zebra instalada y conectada. Las pruebas de npm test nunca usan la impresora real.
